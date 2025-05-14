@@ -18,7 +18,7 @@ public class JobModel {
     @Column(length = 55, nullable = false)
     private String name;
 
-    @Column(length = 55, nullable = false)
+    @Column(length = 55, nullable = false, name = "job_group")
     private String group;
 
     @Column(length = 55, nullable = false)
