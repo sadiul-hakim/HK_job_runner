@@ -6,14 +6,11 @@ import org.quartz.Scheduler;
 import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import xyz.sadiulhakim.job.JobModel;
 import xyz.sadiulhakim.job.JobService;
 import xyz.sadiulhakim.trigger.TriggerModel;
-import xyz.sadiulhakim.trigger.TriggerService;
 import xyz.sadiulhakim.util.JobUtility;
 
 import java.util.List;
@@ -31,9 +28,8 @@ public class JobScheduler {
         this.scheduler = scheduler;
     }
 
-    @Async
-    @EventListener(ApplicationReadyEvent.class)
-    void applicationIsReady(ApplicationReadyEvent event) {
+    @Scheduled(initialDelay = 10 * 1000, fixedRate = 1000 * 60 * 20, scheduler = "defaultTaskScheduler")
+    void applicationIsReady() {
         LOGGER.info("+-----------------------------Scheduling jobs----------------------------------+");
 
         List<JobModel> jobs = jobService.findAll();
