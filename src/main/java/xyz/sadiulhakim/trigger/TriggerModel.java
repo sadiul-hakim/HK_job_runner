@@ -25,7 +25,7 @@ public class TriggerModel {
     private String description;
 
     @JsonIgnore
-    @ManyToMany(mappedBy = "triggers")
+    @ManyToMany(mappedBy = "triggers", fetch = FetchType.LAZY)
     private List<JobModel> jobs = new ArrayList<>();
 
     public TriggerModel() {

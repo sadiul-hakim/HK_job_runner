@@ -6,6 +6,7 @@ import xyz.sadiulhakim.job.pojo.TriggerAssignmentPojo;
 import xyz.sadiulhakim.trigger.TriggerModel;
 import xyz.sadiulhakim.trigger.TriggerService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -20,6 +21,7 @@ public class JobService {
     }
 
     public JobModel save(JobModel model) {
+        model.setCreatedAt(LocalDateTime.now());
         return repository.save(model);
     }
 

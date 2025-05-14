@@ -26,7 +26,7 @@ public class JobModel {
 
     private LocalDateTime createdAt;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     private List<TriggerModel> triggers = new ArrayList<>();
 
     public JobModel() {
