@@ -31,7 +31,6 @@ public class JobScheduler {
     @Scheduled(initialDelay = 10 * 1000, fixedRate = 1000 * 60 * 20, scheduler = "defaultTaskScheduler")
     void applicationIsReady() {
         LOGGER.info("+-----------------------------Scheduling jobs----------------------------------+");
-
         List<JobModel> jobs = jobService.findAll();
         for (JobModel job : jobs) {
             if (job.getTriggers().isEmpty()) {
@@ -41,10 +40,13 @@ public class JobScheduler {
 
             try {
                 JobKey jobKey = JobKey.jobKey(job.getName(), job.getGroup());
-                if (!scheduler.checkExists(jobKey)) {
-                    JobDetail jobDetail = JobUtility.createJobDetail(job, jobKey);
-                    scheduler.addJob(jobDetail, false); // false = don’t replace existing
+                if (scheduler.checkExists(jobKey)) {
+                    LOGGER.warn("Job {} already scheduled", job.getName());
+                    continue;
                 }
+
+                JobDetail jobDetail = JobUtility.createJobDetail(job, jobKey);
+                scheduler.addJob(jobDetail, false); // false = don’t replace existing
 
                 for (TriggerModel trigger : job.getTriggers()) {
                     String name = "trigger-" + job.getName() + "-" + trigger.getName();
