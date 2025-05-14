@@ -30,6 +30,10 @@ public class JobService {
                 .orElseThrow(() -> new EntityNotFoundException("Could not find job with id " + id));
     }
 
+    public List<JobModel> findAll(){
+        return repository.findAll();
+    }
+
     public List<TriggerModel> findAllTriggers(long jobId) {
         JobModel job = findById(jobId);
         return job.getTriggers();

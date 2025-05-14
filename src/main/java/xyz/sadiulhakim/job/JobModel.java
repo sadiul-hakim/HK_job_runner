@@ -15,7 +15,7 @@ public class JobModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(length = 55, nullable = false)
+    @Column(length = 55, nullable = false, unique = true)
     private String name;
 
     @Column(length = 55, nullable = false, name = "job_group")
