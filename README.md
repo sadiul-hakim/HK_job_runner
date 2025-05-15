@@ -108,3 +108,55 @@ Hello from Quartz Job! Time: 2025-05-14T10:00:20
 - Use JobDataMap to pass parameters to jobs dynamically.
 - To persist jobs/triggers, configure Quartz with JDBC JobStore.
 - Use SchedulerFactoryBean to expose and customize the Scheduler.
+
+## 4. Running Jobs in Virtual Thread and Safe Job and Trigger information in database instead of RAM
+
+> Make sure you have database configured
+
+### Properties
+```
+spring.quartz.jdbc.initialize-schema=always
+spring.quartz.job-store-type=jdbc
+spring.quartz.jdbc.platform=postgres
+spring.quartz.wait-for-jobs-to-complete-on-shutdown=true
+```
+
+### Code Configuration
+
+```java
+@Bean
+    public Scheduler scheduler(DataSource dataSource) throws SchedulerException, InvalidConfigurationException {
+        QuartzVirtualThreadPool virtualThreadPool = new QuartzVirtualThreadPool();
+        DBConnectionManager dbConnectionManager = DBConnectionManager.getInstance();
+        dbConnectionManager.addConnectionProvider("myDS", new ConnectionProvider() {
+            @Override
+            public Connection getConnection() throws SQLException {
+                return dataSource.getConnection();
+            }
+
+            @Override
+            public void shutdown() {
+            }
+
+            @Override
+            public void initialize() {
+            }
+        });
+
+        JobStoreTX jobStore = new JobStoreTX();
+        jobStore.setDataSource("myDS");
+        jobStore.setDriverDelegateClass("org.quartz.impl.jdbcjobstore.PostgreSQLDelegate");
+        jobStore.setTablePrefix("QRTZ_");
+
+        DirectSchedulerFactory.getInstance().createScheduler(
+                "VirtualScheduler",
+                "VTGroup",
+                virtualThreadPool,
+                jobStore
+        );
+
+        Scheduler scheduler = DirectSchedulerFactory.getInstance().getScheduler("VirtualScheduler");
+        scheduler.start();
+        return scheduler;
+    }
+```
