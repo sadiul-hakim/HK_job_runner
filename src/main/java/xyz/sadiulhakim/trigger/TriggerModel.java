@@ -24,6 +24,9 @@ public class TriggerModel {
     @Column(length = 55)
     private String description;
 
+    @Column(length = 55)
+    private String timeZone;
+
     @JsonIgnore
     @ManyToMany(mappedBy = "triggers", fetch = FetchType.LAZY)
     private List<JobModel> jobs = new ArrayList<>();
@@ -31,11 +34,14 @@ public class TriggerModel {
     public TriggerModel() {
     }
 
-    public TriggerModel(long id, String cronExpression, String name, String description) {
+    public TriggerModel(long id, String cronExpression, String name, String description, String timeZone,
+                        List<JobModel> jobs) {
         this.id = id;
         this.cronExpression = cronExpression;
         this.name = name;
         this.description = description;
+        this.timeZone = timeZone;
+        this.jobs = jobs;
     }
 
     public List<JobModel> getJobs() {
@@ -78,16 +84,25 @@ public class TriggerModel {
         this.description = description;
     }
 
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public void setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         TriggerModel that = (TriggerModel) o;
         return id == that.id && Objects.equals(cronExpression, that.cronExpression) && Objects.equals(name, that.name)
-                && Objects.equals(description, that.description);
+                && Objects.equals(description, that.description) && Objects.equals(timeZone, that.timeZone) &&
+                Objects.equals(jobs, that.jobs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, cronExpression, name, description);
+        return Objects.hash(id, cronExpression, name, description, timeZone, jobs);
     }
 }

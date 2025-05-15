@@ -3,8 +3,12 @@ package xyz.sadiulhakim.util;
 import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 import xyz.sadiulhakim.job.JobModel;
 import xyz.sadiulhakim.trigger.TriggerModel;
+
+import java.time.ZoneId;
+import java.util.TimeZone;
 
 public class JobUtility {
     public static final String JOBS_PACKAGE_PATH = "xyz.sadiulhakim.jobs.";
@@ -33,9 +37,21 @@ public class JobUtility {
     }
 
     public static Trigger createTrigger(TriggerModel model, JobKey key, String name, String group) {
+
+        ZoneId zone;
+        try {
+            zone = StringUtils.hasText(model.getTimeZone()) ? ZoneId.of(model.getTimeZone()) : ZoneId.systemDefault();
+        } catch (Exception ex) {
+            LOGGER.error("Failed to create trigger {} for zone {}", model.getName(), model.getTimeZone());
+            zone = ZoneId.systemDefault();
+        }
+
         return TriggerBuilder.newTrigger()
                 .withIdentity(name, group)
-                .withSchedule(CronScheduleBuilder.cronSchedule(model.getCronExpression()))
+                .withSchedule(
+                        CronScheduleBuilder.cronSchedule(model.getCronExpression())
+                                .inTimeZone(TimeZone.getTimeZone(zone))
+                )
                 .forJob(key)
                 .build();
     }
