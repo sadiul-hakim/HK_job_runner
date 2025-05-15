@@ -39,7 +39,8 @@ public class JobScheduler {
             }
 
             try {
-                JobKey jobKey = JobKey.jobKey(job.getName(), job.getGroup());
+                JobKey jobKey = JobKey.jobKey(job.getName().replace(" ", "_"),
+                        job.getGroup().replace(" ", "_"));
                 if (scheduler.checkExists(jobKey)) {
                     LOGGER.warn("Job {} already scheduled", job.getName());
                     continue;
@@ -49,7 +50,8 @@ public class JobScheduler {
                 scheduler.addJob(jobDetail, false); // false = don’t replace existing
 
                 for (TriggerModel trigger : job.getTriggers()) {
-                    String name = "trigger-" + job.getName() + "-" + trigger.getName();
+                    String name = "trigger-" + job.getName().replace(" ", "_") +
+                            "-" + trigger.getName().replace(" ", "_");
                     Trigger t = JobUtility.createTrigger(
                             trigger, jobKey, name, job.getGroup()
                     );
