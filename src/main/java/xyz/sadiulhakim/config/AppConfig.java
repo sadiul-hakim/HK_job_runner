@@ -1,10 +1,5 @@
 package xyz.sadiulhakim.config;
 
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.impl.DirectSchedulerFactory;
-import org.quartz.impl.jdbcjobstore.InvalidConfigurationException;
-import org.quartz.impl.jdbcjobstore.JobStoreTX;
 import org.quartz.utils.ConnectionProvider;
 import org.quartz.utils.DBConnectionManager;
 import org.springframework.context.annotation.Bean;
@@ -13,10 +8,12 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.SimpleAsyncTaskScheduler;
+import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Properties;
 
 @EnableAsync
 @Configuration
@@ -25,44 +22,49 @@ public class AppConfig {
 
     @Bean
     TaskScheduler defaultTaskScheduler() {
-        SimpleAsyncTaskScheduler taskScheduler = new SimpleAsyncTaskScheduler();
-        taskScheduler.setVirtualThreads(true);
-        return taskScheduler;
+        var scheduler = new SimpleAsyncTaskScheduler();
+        scheduler.setVirtualThreads(true);
+        return scheduler;
     }
 
     @Bean
-    public Scheduler scheduler(DataSource dataSource) throws SchedulerException, InvalidConfigurationException {
-        QuartzVirtualThreadPool virtualThreadPool = new QuartzVirtualThreadPool();
-        DBConnectionManager dbConnectionManager = DBConnectionManager.getInstance();
-        dbConnectionManager.addConnectionProvider("myDS", new ConnectionProvider() {
+    public SchedulerFactoryBean schedulerFactoryBean(DataSource dataSource) {
+        // Step 1: Register DataSource for Quartz
+        DBConnectionManager.getInstance().addConnectionProvider("quartzDataSource", new ConnectionProvider() {
             @Override
             public Connection getConnection() throws SQLException {
                 return dataSource.getConnection();
             }
 
             @Override
-            public void shutdown() {
-            }
+            public void shutdown() {}
 
             @Override
-            public void initialize() {
-            }
+            public void initialize() {}
         });
 
-        JobStoreTX jobStore = new JobStoreTX();
-        jobStore.setDataSource("myDS");
-        jobStore.setDriverDelegateClass("org.quartz.impl.jdbcjobstore.PostgreSQLDelegate");
-        jobStore.setTablePrefix("QRTZ_");
+        // Step 2: Configure Quartz
+        Properties props = getProperties();
 
-        DirectSchedulerFactory.getInstance().createScheduler(
-                "VirtualScheduler",
-                "VTGroup",
-                virtualThreadPool,
-                jobStore
-        );
+        // Step 3: Build Factory
+        SchedulerFactoryBean factory = new SchedulerFactoryBean();
+        factory.setDataSource(dataSource);
+        factory.setQuartzProperties(props);
+        factory.setWaitForJobsToCompleteOnShutdown(true);
+        factory.setOverwriteExistingJobs(true);
+        return factory;
+    }
 
-        Scheduler scheduler = DirectSchedulerFactory.getInstance().getScheduler("VirtualScheduler");
-        scheduler.start();
-        return scheduler;
+    private static Properties getProperties() {
+        Properties props = new Properties();
+        props.setProperty("org.quartz.scheduler.instanceName", "VirtualScheduler");
+        props.setProperty("org.quartz.jobStore.class", "org.quartz.impl.jdbcjobstore.JobStoreTX");
+        props.setProperty("org.quartz.jobStore.driverDelegateClass", "org.quartz.impl.jdbcjobstore.PostgreSQLDelegate");
+        props.setProperty("org.quartz.jobStore.dataSource", "quartzDataSource");
+        props.setProperty("org.quartz.jobStore.tablePrefix", "QRTZ_");
+
+        // Use Virtual Thread Pool
+        props.setProperty("org.quartz.threadPool.class", "xyz.sadiulhakim.config.QuartzVirtualThreadPool");
+        return props;
     }
 }

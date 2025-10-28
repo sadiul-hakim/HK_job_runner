@@ -40,4 +40,7 @@ public class QuartzVirtualThreadPool implements ThreadPool {
     public void setInstanceName(String schedName) {
         // Not needed
     }
+
+    public void setThreadCount(int count) {}
+    public void setThreadPriority(int priority) {}
 }
