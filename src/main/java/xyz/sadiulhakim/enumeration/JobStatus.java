@@ -14,7 +14,9 @@ public enum JobStatus {
     PROCESSING_FILE("Processing File", 9),
     PROCESSING_DONE("Processing Done", 10),
     SAVING_DATA("Saving Data", 11),
-    SAVING_DONE("Saving Done", 12);
+    SAVING_DONE("Saving Done", 12),
+    LOADING_DATA("Loading Data", 13),
+    TRANSFERRING_DATA("Transferring Data", 14);
 
 
     private final int id;
