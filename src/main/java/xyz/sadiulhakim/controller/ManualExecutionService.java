@@ -31,7 +31,7 @@ public class ManualExecutionService {
 
         JobModel job = jobService.findById(jobId);
         JobExecution save = jobExecutionService.create(job);
-        schedulerService.scheduleJob(job, save.getId()); // TODO : Fix This
+        schedulerService.executeJob(job, save.getId());
         LOGGER.info("Job {} is triggered", job.getName());
     }
 }

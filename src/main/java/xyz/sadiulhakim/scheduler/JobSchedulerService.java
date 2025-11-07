@@ -1,15 +1,11 @@
 package xyz.sadiulhakim.scheduler;
 
-import org.quartz.JobDetail;
-import org.quartz.JobKey;
-import org.quartz.Scheduler;
-import org.quartz.Trigger;
+import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import xyz.sadiulhakim.enumeration.JobStatus;
-import xyz.sadiulhakim.execution.JobExecution;
 import xyz.sadiulhakim.execution.JobExecutionService;
 import xyz.sadiulhakim.job.JobModel;
 import xyz.sadiulhakim.job.JobService;
@@ -34,19 +30,18 @@ public class JobSchedulerService {
         this.executionService = executionService;
     }
 
-    @Scheduled(initialDelay = 10 * 1000, fixedRate = 1000 * 60 * 2, scheduler = "defaultTaskScheduler")
+    @Scheduled(initialDelay = 5 * 1000, fixedRate = 1000 * 60 * 10, scheduler = "defaultTaskScheduler")
     void applicationIsReady() {
         LOGGER.info("+-----------------------------Scheduling jobs----------------------------------+");
         List<JobModel> jobs = jobService.findAll();
         for (JobModel job : jobs) {
-            JobExecution execution = executionService.create(job);
-            scheduleJob(job, execution.getId());
+            scheduleJob(job);
         }
 
         LOGGER.info("+-----------------------------Done Scheduling jobs----------------------------------+");
     }
 
-    public void scheduleJob(JobModel job, long runId) {
+    public void scheduleJob(JobModel job) {
         if (job.getTriggers().isEmpty()) {
             LOGGER.warn("Skipping job {}", job.getName());
             return;
@@ -61,8 +56,8 @@ public class JobSchedulerService {
             }
 
             JobDetail jobDetail = JobUtility.createJobDetail(job, jobKey);
-            jobDetail.getJobDataMap().put("jobId", job.getId());
-            jobDetail.getJobDataMap().put("runId", runId);
+            JobDataMap dataMap = jobDetail.getJobDataMap();
+            dataMap.put(JobUtility.JOB_ID, job.getId());
             scheduler.addJob(jobDetail, false); // false = don’t replace existing
 
             for (TriggerModel trigger : job.getTriggers()) {
@@ -74,9 +69,32 @@ public class JobSchedulerService {
                 scheduler.scheduleJob(t);
             }
             LOGGER.info("Successfully scheduled job - {}", job.getName());
-            executionService.update(runId, JobStatus.IN_PROGRESS, LocalDateTime.now(), null);
         } catch (Exception ex) {
             LOGGER.error("Failed to schedule job - {}", job.getName());
+        }
+    }
+
+    public void executeJob(JobModel job, long executionId) {
+
+        JobKey jobKey = JobKey.jobKey(job.getName().replace(" ", "_"),
+                job.getGroup().replace(" ", "_"));
+        JobDetail jobDetail = JobUtility.createJobDetail(job, jobKey);
+        JobDataMap dataMap = jobDetail.getJobDataMap();
+        dataMap.put(JobUtility.RUN_ID, executionId);
+        dataMap.put(JobUtility.JOB_ID, job.getId());
+
+        executionService.update(executionId, JobStatus.IN_PROGRESS, LocalDateTime.now(), null);
+
+        // If the Job Key is not yet exist in the Scheduler, Add it now.
+        try {
+            if (!scheduler.checkExists(jobDetail.getKey())) {
+                scheduler.addJob(jobDetail, true);
+            }
+
+            scheduler.triggerJob(jobDetail.getKey());
+            LOGGER.info("Job {} is triggered with run id {}", job.getId(), executionId);
+        } catch (SchedulerException e) {
+            LOGGER.error("Failed to check job existence, error {}", e.getMessage());
         }
     }
 }

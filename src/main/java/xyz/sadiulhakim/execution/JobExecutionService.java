@@ -1,5 +1,6 @@
 package xyz.sadiulhakim.execution;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,16 +18,14 @@ import java.util.List;
 public class JobExecutionService {
 
     private final JobExecutionRepository repository;
-    private final JobExecutionAsyncService jobExecutionAsyncService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JobExecutionService.class);
 
     @Value("${app.max.page_size:1000}")
     private int maxPageSize;
 
-    public JobExecutionService(JobExecutionRepository repository, JobExecutionAsyncService jobExecutionAsyncService) {
+    public JobExecutionService(JobExecutionRepository repository) {
         this.repository = repository;
-        this.jobExecutionAsyncService = jobExecutionAsyncService;
     }
 
     @Transactional
@@ -44,12 +43,35 @@ public class JobExecutionService {
         }
     }
 
+    @Transactional
     public void update(JobExecution execution) {
-        jobExecutionAsyncService.updateAsync(execution);
+        try {
+            JobExecution oldExecution = repository.findById(execution.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Job Execution is not found with id " + execution.getId()));
+            oldExecution.setStatus(execution.getStatus());
+            oldExecution.setStartTime(execution.getStartTime());
+            oldExecution.setEndTime(execution.getEndTime());
+        } catch (Exception ex) {
+            LOGGER.error("Failed to update Job Execution, error : {}", ex.getMessage());
+        }
     }
 
+    @Transactional
     public void update(long runId, JobStatus status, LocalDateTime start, LocalDateTime end) {
-        jobExecutionAsyncService.updateAsync(runId, status, start, end);
+        JobExecution oldExecution = repository.findById(runId)
+                .orElseThrow(() -> new EntityNotFoundException("Job Execution is not found with id " + runId));
+
+        if (status != null) {
+            oldExecution.setStatus(status);
+        }
+
+        if (start != null) {
+            oldExecution.setStartTime(start);
+        }
+
+        if (end != null) {
+            oldExecution.setEndTime(end);
+        }
     }
 
     @Transactional(readOnly = true)

@@ -11,6 +11,8 @@ import java.time.ZoneId;
 import java.util.TimeZone;
 
 public class JobUtility {
+    public static final String JOB_ID = "jobId";
+    public static final String RUN_ID = "runId";
     public static final String JOBS_PACKAGE_PATH = "xyz.sadiulhakim.jobs.";
     public static final Logger LOGGER = LoggerFactory.getLogger(JobUtility.class);
 
