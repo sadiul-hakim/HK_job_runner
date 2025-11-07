@@ -9,7 +9,15 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "job_execution")
+@Table(
+        name = "job_execution",
+        indexes = {
+                @Index(
+                        name = "idx_job_execution_end_time_desc",
+                        columnList = "end_time DESC"
+                )
+        }
+)
 public class JobExecution {
 
     @Id
@@ -23,6 +31,8 @@ public class JobExecution {
     private ExecutionType type;
 
     private LocalDateTime startTime;
+
+    @Column(name = "end_time")
     private LocalDateTime endTime;
 
     @ManyToOne
