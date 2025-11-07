@@ -19,9 +19,9 @@ import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 @Component
-public class HelloWorldJob implements Job {
+public class DataFetcherJob implements Job {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(HelloWorldJob.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataFetcherJob.class);
 
     private JobExecutionService executionService;
     private JobService jobService;
@@ -62,18 +62,69 @@ public class HelloWorldJob implements Job {
         try {
             // Mark execution as IN_PROGRESS
             LocalDateTime startDate = LocalDateTime.now();
+            dataMap.put(JobUtility.START_DATE, startDate);
             executionService.update(
                     execution.getId(),
                     JobStatus.IN_PROGRESS,
                     startDate,
                     null
             );
-            dataMap.put(JobUtility.START_DATE, startDate);
             dataMap.put(JobUtility.JOB_STATUS, JobStatus.IN_PROGRESS.getId());
 
             // Simulate actual work
             TimeUnit.SECONDS.sleep(5);
-            LOGGER.info("Hello, World!");
+            executionService.update(
+                    execution.getId(),
+                    JobStatus.DOWNLOADING_FILE,
+                    null,
+                    null
+            );
+            dataMap.put(JobUtility.JOB_STATUS, JobStatus.DOWNLOADING_FILE.getId());
+
+            TimeUnit.SECONDS.sleep(5);
+            executionService.update(
+                    execution.getId(),
+                    JobStatus.DOWNLOADING_DONE,
+                    null,
+                    null
+            );
+            dataMap.put(JobUtility.JOB_STATUS, JobStatus.DOWNLOADING_DONE.getId());
+
+            TimeUnit.SECONDS.sleep(5);
+            executionService.update(
+                    execution.getId(),
+                    JobStatus.PROCESSING_FILE,
+                    null,
+                    null
+            );
+            dataMap.put(JobUtility.JOB_STATUS, JobStatus.PROCESSING_FILE.getId());
+
+            TimeUnit.SECONDS.sleep(5);
+            executionService.update(
+                    execution.getId(),
+                    JobStatus.PROCESSING_DONE,
+                    null,
+                    null
+            );
+            dataMap.put(JobUtility.JOB_STATUS, JobStatus.PROCESSING_DONE.getId());
+
+            TimeUnit.SECONDS.sleep(5);
+            executionService.update(
+                    execution.getId(),
+                    JobStatus.SAVING_DATA,
+                    null,
+                    null
+            );
+            dataMap.put(JobUtility.JOB_STATUS, JobStatus.SAVING_DATA.getId());
+
+            TimeUnit.SECONDS.sleep(5);
+            executionService.update(
+                    execution.getId(),
+                    JobStatus.SAVING_DONE,
+                    null,
+                    null
+            );
+            dataMap.put(JobUtility.JOB_STATUS, JobStatus.SAVING_DONE.getId());
 
             // Mark execution as FINISHED
             LocalDateTime endDate = LocalDateTime.now();

@@ -2,13 +2,20 @@ package xyz.sadiulhakim.enumeration;
 
 public enum JobStatus {
 
-    UNDEFINED("", 0),
+    UNKNOWN("", 0),
     NEW("New", 1),
     IN_PROGRESS("In Progress", 2),
     FINISHED("Finished", 3),
     KILLED("Killed", 4),
     FAILED("Failed", 5),
-    CANCELED("Canceled", 6);
+    CANCELED("Canceled", 6),
+    DOWNLOADING_FILE("Downloading File", 7),
+    DOWNLOADING_DONE("Downloading Done", 8),
+    PROCESSING_FILE("Processing File", 9),
+    PROCESSING_DONE("Processing Done", 10),
+    SAVING_DATA("Saving Data", 11),
+    SAVING_DONE("Saving Done", 12);
+
 
     private final int id;
     private final String name;

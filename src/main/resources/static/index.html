@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Job Executions — Realtime Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #0e152b;
+            font-family: Arial, sans-serif;
+            color: #e8ecf3;
+        }
+
+        h2 {
+            margin: 20px 0 10px;
+            color: #bcd4ff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #162043;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 40px;
+        }
+
+        th, td {
+            padding: 12px 14px;
+            font-size: 14px;
+            border-bottom: 1px solid #1f2d57;
+        }
+
+        th {
+            background: #1c2a55;
+            color: #d7e4ff;
+            text-align: left;
+        }
+
+        tr:hover td {
+            background: #1b2650;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .status-FINISHED {
+            background: #0c3;
+            color: #000;
+        }
+
+        .status-IN_PROGRESS {
+            background: #ffcc00;
+            color: #000;
+        }
+
+        .status-FAILED {
+            background: #e60000;
+            color: #fff;
+        }
+
+        .type-MANUAL {
+            background: #0099ff;
+            color: #fff;
+        }
+
+        .type-SCHEDULED {
+            background: #ff7b00;
+            color: #fff;
+        }
+
+        #connectionStatus {
+            margin-bottom: 20px;
+            font-size: 14px;
+            padding: 8px 12px;
+            display: inline-block;
+            border-radius: 6px;
+            background: #1c2a55;
+            color: #9fbaff;
+        }
+
+        .table-wrapper {
+            max-height: 450px; /* Adjust height as needed */
+            overflow-y: auto;
+            border-radius: 10px; /* Same as table */
+            margin-bottom: 40px;
+            background: #162043; /* Match table background */
+        }
+
+        /* Keep table headers fixed */
+        .table-wrapper table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        .table-wrapper thead th {
+            position: sticky;
+            top: 0;
+            background: #1c2a55;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Realtime Job Execution Dashboard</h2>
+    <div id="connectionStatus">Connecting to SSE...</div>
+
+    <h2>Running Jobs</h2>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+            <tr>
+                <th>Job Name</th>
+                <th>Execution ID</th>
+                <th>Start Time</th>
+                <th>Status</th>
+                <th>Type</th>
+            </tr>
+            </thead>
+            <tbody id="runningJobs"></tbody>
+        </table>
+    </div>
+
+    <h2>Execution History</h2>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+            <tr>
+                <th>Job Name</th>
+                <th>Execution ID</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Time Taken</th>
+                <th>Status</th>
+                <th>Type</th>
+            </tr>
+            </thead>
+            <tbody id="historyJobs"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function badge(text, cssClass) {
+        return `<span class="badge ${cssClass}">${text}</span>`;
+    }
+
+    function render() {
+        const runningEl = document.getElementById('runningJobs');
+        const historyEl = document.getElementById('historyJobs');
+
+        runningEl.innerHTML = window.jobData.runningJobs
+            .map(j => `
+            <tr>
+                <td>${j.name}</td>
+                <td>${j.executionId}</td>
+                <td>${j.startTime}</td>
+                <td>${badge(j.status, 'status-' + j.status)}</td>
+                <td>${badge(j.executionType, 'type-' + j.executionType)}</td>
+            </tr>
+        `).join('');
+
+        historyEl.innerHTML = window.jobData.history
+            .map(j => `
+            <tr>
+                <td>${j.name}</td>
+                <td>${j.executionId}</td>
+                <td>${j.startTime}</td>
+                <td>${j.endTime}</td>
+                <td>${j.timeTaken}</td>
+                <td>${badge(j.status, 'status-' + j.status)}</td>
+                <td>${badge(j.executionType, 'type-' + j.executionType)}</td>
+            </tr>
+        `).join('');
+    }
+
+    window.jobData = {runningJobs: [], history: []};
+
+    const statusEl = document.getElementById('connectionStatus');
+
+    const sse = new EventSource("/execution-stream");
+
+    sse.onopen = () => {
+        statusEl.textContent = "Connected";
+        statusEl.style.background = "#093";
+        statusEl.style.color = "#fff";
+    };
+
+    sse.onerror = () => {
+        statusEl.textContent = "Disconnected — retrying...";
+        statusEl.style.background = "#600";
+        statusEl.style.color = "#fff";
+    };
+
+    sse.addEventListener("executions-update", (event) => {
+        const data = JSON.parse(event.data);
+        window.jobData = data;
+        render();
+    });
+</script>
+</body>
+</html>

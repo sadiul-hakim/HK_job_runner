@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import xyz.sadiulhakim.enumeration.ExecutionType;
 import xyz.sadiulhakim.enumeration.JobStatus;
 import xyz.sadiulhakim.exception.OperationNowAllowedException;
 import xyz.sadiulhakim.job.JobModel;
@@ -29,11 +30,12 @@ public class JobExecutionService {
     }
 
     @Transactional
-    public JobExecution create(JobModel job) {
+    public JobExecution create(JobModel job, ExecutionType type) {
         try {
             JobExecution execution = new JobExecution();
             execution.setStatus(JobStatus.NEW);
             execution.setJob(job);
+            execution.setType(type);
             JobExecution save = repository.save(execution);
             LOGGER.info("Successfully saved Job Execution for job {}", job.getName());
             return save;
@@ -80,5 +82,10 @@ public class JobExecutionService {
             throw new OperationNowAllowedException("Page Size can not bigger than " + maxPageSize);
         }
         return repository.findAllByJob(job, PageRequest.of(pageNumber, pageSize));
+    }
+
+    @Transactional(readOnly = true)
+    public List<JobExecution> findHistory() {
+        return repository.findTop300ByOrderByEndTimeDesc();
     }
 }

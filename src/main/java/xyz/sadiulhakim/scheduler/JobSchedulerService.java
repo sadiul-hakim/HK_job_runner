@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import xyz.sadiulhakim.enumeration.ExecutionType;
 import xyz.sadiulhakim.job.JobModel;
 import xyz.sadiulhakim.job.JobService;
 import xyz.sadiulhakim.trigger.TriggerModel;
@@ -74,8 +75,9 @@ public class JobSchedulerService {
         JobKey jobKey = JobKey.jobKey(job.getName().replace(" ", "_"),
                 job.getGroup().replace(" ", "_"));
         JobDetail jobDetail = JobUtility.createJobDetail(job, jobKey);
-        JobDataMap dataMap = jobDetail.getJobDataMap();
+        JobDataMap dataMap = new JobDataMap();
         dataMap.put(JobUtility.JOB_ID, job.getId());
+        dataMap.put(JobUtility.EXECUTION_TYPE, ExecutionType.MANUAL.getId());
 
         // If the Job Key is not yet exist in the Scheduler, Add it now.
         try {
@@ -83,7 +85,7 @@ public class JobSchedulerService {
                 scheduler.addJob(jobDetail, true);
             }
 
-            scheduler.triggerJob(jobDetail.getKey());
+            scheduler.triggerJob(jobDetail.getKey(), dataMap);
             LOGGER.info("Job {} is triggered", job.getId());
         } catch (SchedulerException e) {
             LOGGER.error("Failed to check job existence, error {}", e.getMessage());

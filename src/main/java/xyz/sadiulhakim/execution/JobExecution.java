@@ -1,6 +1,7 @@
 package xyz.sadiulhakim.execution;
 
 import jakarta.persistence.*;
+import xyz.sadiulhakim.enumeration.ExecutionType;
 import xyz.sadiulhakim.enumeration.JobStatus;
 import xyz.sadiulhakim.job.JobModel;
 
@@ -18,27 +19,34 @@ public class JobExecution {
     @Enumerated(EnumType.STRING)
     private JobStatus status;
 
+    @Enumerated(EnumType.STRING)
+    private ExecutionType type;
+
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     private JobModel job;
 
-    public JobExecution(JobStatus status, LocalDateTime startTime, JobModel job) {
-        this.status = status;
-        this.startTime = startTime;
-        this.job = job;
-    }
-
-    public JobExecution(Long id, JobStatus status, LocalDateTime startTime, LocalDateTime endTime, JobModel job) {
+    public JobExecution(Long id, JobStatus status, ExecutionType type, LocalDateTime startTime, LocalDateTime endTime,
+                        JobModel job) {
         this.id = id;
         this.status = status;
+        this.type = type;
         this.startTime = startTime;
         this.endTime = endTime;
         this.job = job;
     }
 
     public JobExecution() {
+    }
+
+    public ExecutionType getType() {
+        return type;
+    }
+
+    public void setType(ExecutionType type) {
+        this.type = type;
     }
 
     public Long getId() {
