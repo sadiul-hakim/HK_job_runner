@@ -9,5 +9,5 @@ import java.util.List;
 public interface JobExecutionRepository extends JpaRepository<JobExecution, Long> {
     List<JobExecution> findAllByJob(JobModel job, Pageable page);
 
-    List<JobExecution> findTop300ByOrderByEndTimeDesc();
+    List<JobExecution> findTop300ByEndTimeIsNotNullOrderByEndTimeDesc();
 }

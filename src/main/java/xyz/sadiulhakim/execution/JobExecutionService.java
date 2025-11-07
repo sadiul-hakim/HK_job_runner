@@ -86,6 +86,6 @@ public class JobExecutionService {
 
     @Transactional(readOnly = true)
     public List<JobExecution> findHistory() {
-        return repository.findTop300ByOrderByEndTimeDesc();
+        return repository.findTop300ByEndTimeIsNotNullOrderByEndTimeDesc();
     }
 }
