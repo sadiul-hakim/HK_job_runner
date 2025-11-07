@@ -1,7 +1,7 @@
 package xyz.sadiulhakim.job;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
-import xyz.sadiulhakim.exception.EntityNotFoundException;
 import xyz.sadiulhakim.job.pojo.TriggerAssignmentPojo;
 import xyz.sadiulhakim.trigger.TriggerModel;
 import xyz.sadiulhakim.trigger.TriggerService;

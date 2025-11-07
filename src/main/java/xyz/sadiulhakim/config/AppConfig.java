@@ -1,7 +1,9 @@
 package xyz.sadiulhakim.config;
 
+import org.quartz.spi.JobFactory;
 import org.quartz.utils.ConnectionProvider;
 import org.quartz.utils.DBConnectionManager;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
@@ -14,11 +16,24 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 @EnableAsync
 @Configuration
 @EnableScheduling
 public class AppConfig {
+
+    private final AutowireCapableBeanFactory beanFactory;
+
+    public AppConfig(AutowireCapableBeanFactory beanFactory) {
+        this.beanFactory = beanFactory;
+    }
+
+    @Bean
+    public JobFactory jobFactory() {
+        return new AutowiringSpringBeanJobFactory(beanFactory);
+    }
 
     @Bean
     TaskScheduler defaultTaskScheduler() {
@@ -28,7 +43,12 @@ public class AppConfig {
     }
 
     @Bean
-    public SchedulerFactoryBean schedulerFactoryBean(DataSource dataSource) {
+    Executor defaultExecutor() {
+        return Executors.newVirtualThreadPerTaskExecutor();
+    }
+
+    @Bean
+    public SchedulerFactoryBean schedulerFactoryBean(JobFactory jobFactory, DataSource dataSource) {
         // Step 1: Register DataSource for Quartz
         DBConnectionManager.getInstance().addConnectionProvider("quartzDataSource", new ConnectionProvider() {
             @Override
@@ -37,10 +57,12 @@ public class AppConfig {
             }
 
             @Override
-            public void shutdown() {}
+            public void shutdown() {
+            }
 
             @Override
-            public void initialize() {}
+            public void initialize() {
+            }
         });
 
         // Step 2: Configure Quartz
@@ -48,6 +70,7 @@ public class AppConfig {
 
         // Step 3: Build Factory
         SchedulerFactoryBean factory = new SchedulerFactoryBean();
+        factory.setJobFactory(jobFactory);
         factory.setDataSource(dataSource);
         factory.setQuartzProperties(props);
         factory.setWaitForJobsToCompleteOnShutdown(true);
