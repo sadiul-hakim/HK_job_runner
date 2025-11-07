@@ -30,8 +30,7 @@ public class ManualExecutionService {
     public void execute(long jobId) {
 
         JobModel job = jobService.findById(jobId);
-        JobExecution save = jobExecutionService.create(job);
-        schedulerService.executeJob(job, save.getId());
+        schedulerService.executeJob(job);
         LOGGER.info("Job {} is triggered", job.getName());
     }
 }

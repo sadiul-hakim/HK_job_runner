@@ -5,14 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import xyz.sadiulhakim.enumeration.JobStatus;
-import xyz.sadiulhakim.execution.JobExecutionService;
 import xyz.sadiulhakim.job.JobModel;
 import xyz.sadiulhakim.job.JobService;
 import xyz.sadiulhakim.trigger.TriggerModel;
 import xyz.sadiulhakim.util.JobUtility;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -22,12 +19,10 @@ public class JobSchedulerService {
 
     private final JobService jobService;
     private final Scheduler scheduler;
-    private final JobExecutionService executionService;
 
-    public JobSchedulerService(JobService jobService, Scheduler scheduler, JobExecutionService executionService) {
+    public JobSchedulerService(JobService jobService, Scheduler scheduler) {
         this.jobService = jobService;
         this.scheduler = scheduler;
-        this.executionService = executionService;
     }
 
     @Scheduled(initialDelay = 5 * 1000, fixedRate = 1000 * 60 * 10, scheduler = "defaultTaskScheduler")
@@ -74,16 +69,13 @@ public class JobSchedulerService {
         }
     }
 
-    public void executeJob(JobModel job, long executionId) {
+    public void executeJob(JobModel job) {
 
         JobKey jobKey = JobKey.jobKey(job.getName().replace(" ", "_"),
                 job.getGroup().replace(" ", "_"));
         JobDetail jobDetail = JobUtility.createJobDetail(job, jobKey);
         JobDataMap dataMap = jobDetail.getJobDataMap();
-        dataMap.put(JobUtility.RUN_ID, executionId);
         dataMap.put(JobUtility.JOB_ID, job.getId());
-
-        executionService.update(executionId, JobStatus.IN_PROGRESS, LocalDateTime.now(), null);
 
         // If the Job Key is not yet exist in the Scheduler, Add it now.
         try {
@@ -92,7 +84,7 @@ public class JobSchedulerService {
             }
 
             scheduler.triggerJob(jobDetail.getKey());
-            LOGGER.info("Job {} is triggered with run id {}", job.getId(), executionId);
+            LOGGER.info("Job {} is triggered", job.getId());
         } catch (SchedulerException e) {
             LOGGER.error("Failed to check job existence, error {}", e.getMessage());
         }
