@@ -8,11 +8,11 @@
         <version>3.5.7</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>xyz.sadiulhakim</groupId>
-    <artifactId>MyJobRunner</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <name>MyJobRunner</name>
-    <description>MyJobRunner</description>
+    <groupId>xyz.dynamo</groupId>
+    <artifactId>dynamo</artifactId>
+    <version>0.0.1</version>
+    <name>dynamo</name>
+    <description>dynamo</description>
     <url/>
     <licenses>
         <license/>
